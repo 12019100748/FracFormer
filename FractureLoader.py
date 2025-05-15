@@ -190,8 +190,8 @@ class DataLoader(Dataset):
 
     def _get_item(self,idx):
 
-        Fractures = np.loadtxt(self.frac_list[idx],delimiter=',')
-        DeformShape,Labelsample = Fractures[:,:3],Fractures[:,3].astype(np.int64)
+        Fractures = np.loadtxt(self.frac_list[idx],delimiter=',')#读取.txt文件
+        DeformShape,Labelsample = Fractures[:,:3],Fractures[:,3].astype(np.int64)#分别获取所有行的前三列（索引0,1,2），表示三维点云坐标。所有行的第四列（索引3），转换为整数类型，表示每个点的分类标签。
         if self.Elastic:
             DeformShape = global_deform(DeformShape, scale_range=0.1, shear_range=0.1)
         if self.Tinit:
