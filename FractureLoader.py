@@ -153,13 +153,13 @@ def global_deform(points, scale_range=0.1, shear_range=0.2):
 
     return final_points
 
-def add_jitter_all(points, jitter_level=0.5, probability=0.3):
+def add_jitter_all(points, jitter_level=0.5, probability=0.3):#为三维点云中的部分点添加 ​​高斯噪声​​，以一定概率（probability）随机扰动点的坐标，用于模拟传感器噪声或增强数据多样性。
 
-    num_points = points.shape[0]
-    jitter = np.random.randn(num_points, 3) * jitter_level
-    mask = np.random.rand(num_points) < probability
-    points[mask] += jitter[mask]
-    return points
+    num_points = points.shape[0]#获取输入点云的点数 num_points
+    jitter = np.random.randn(num_points, 3) * jitter_level#生成形状为 (N, 3) 的标准正态分布（均值 0，标准差 1）随机数。* jitter_level：将噪声幅度缩放到标准差为 jitter_level。
+    mask = np.random.rand(num_points) < probability#生成num_points个 [0, 1) 之间的均匀分布随机数。判断每个随机数是否小于probability。
+    points[mask] += jitter[mask]#对选中的点（掩码为 True）叠加噪声
+    return points#添加噪声后的点云，形状与输入一致 (N, 3)
 
 def sort_labels_by_frequency(label):
 
@@ -200,10 +200,10 @@ class DataLoader(Dataset):
         DeformShape,Labelsample = Fractures[:,:3],Fractures[:,3].astype(np.int64)#分别获取所有行的前三列（索引0,1,2），表示三维点云坐标。所有行的第四列（索引3），转换为整数类型，表示每个点的分类标签。
         if self.Elastic:#对点云施加 ​​非刚性形变​​，模拟物体弯曲、拉伸等弹性变化
             DeformShape = global_deform(DeformShape, scale_range=0.1, shear_range=0.1)
-        if self.Tinit:
+        if self.Tinit:#生成一个刚体变换矩阵​​（4x4齐次坐标矩阵），包含随机旋转和平移，且变换中心为点云的几何中心。
             Trandom = randomMatrix(DeformShape, max_angle=30, max_tran=30)
             DeformShape = apply_transform(DeformShape, Trandom)
-        if self.jitter:
+        if self.jitter:#三维点云中的部分点添加 ​​高斯噪声，以一定概率（probability）随机扰动点的坐标，用于模拟传感器噪声或增强数据多样性。
             DeformShape = add_jitter_all(DeformShape, probability=0.1)
 
         Target = copy.deepcopy(DeformShape)
