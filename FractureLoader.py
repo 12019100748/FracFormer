@@ -32,23 +32,27 @@ def pc_normalize_params(pc):
     return pc,centroid,m
 
 def randomMatrix(points,max_angle=30,max_tran=30,type='normal'):
+    #生成一个 ​​刚体变换矩阵​​（4x4齐次坐标矩阵），包含随机旋转和平移，且变换中心为点云的几何中心。
     if type =='uniform':
+        #生成三个随机旋转角（欧拉角）和平移向量
         random_angles = np.random.uniform(-max_angle, max_angle, size=(3))
         random_translations = np.random.uniform(-max_tran, max_tran, size=(3)) # 正态分布
     else:
         random_angles = np.random.normal(loc=0, scale=max_angle, size=(3))  # 正态分布
         random_translations = np.random.normal(loc=0, scale=max_tran, size=(3))  # 正态分布
-    random_rotations = Rotation.from_euler('xyz', random_angles, degrees=True).as_matrix()
+    random_rotations = Rotation.from_euler('xyz', random_angles, degrees=True).as_matrix()#将随机生成的欧拉角转换为 3x3 旋转矩阵。
+    #若 random_angles = [30, 15, -10]，则依次绕 X 轴转 30 度，Y 轴转 15 度，Z 轴转 -10 度。
 
     Trandom = np.eye(4)
     Trandom[:3, :3] = random_rotations
     Trandom[:3, 3] = random_translations
 
-    center = np.mean(points, axis=0)
+    center = np.mean(points, axis=0)#将点云中心平移到原点，确保变换围绕中心进行。
     Tcenter = np.identity(4)
-    Tcenter[:3, 3]= -center
+    Tcenter[:3, 3]= -center#构建平移矩阵 Tcenter​​，当应用此矩阵时，点云会被平移至 ​​坐标系原点​​（质心对齐原点）。
 
-    Trandom = np.dot(np.linalg.inv(Tcenter),np.dot(Trandom,Tcenter))
+    
+    Trandom = np.dot(np.linalg.inv(Tcenter),np.dot(Trandom,Tcenter))#将初始变换矩阵 Trandom 修正为以点云中心为参考系的变换。
     return Trandom
 
 def apply_transform(deformShape,Trand):
@@ -130,7 +134,7 @@ def randSheer(scale_range=0,shear_range=0):
     return transformation_matrix
 
 def global_deform(points, scale_range=0.1, shear_range=0.2):
-
+    
     center = np.mean(points,axis=0)
     centered_points = points - center#将点云重心平移至原点
 
@@ -139,7 +143,9 @@ def global_deform(points, scale_range=0.1, shear_range=0.2):
 
     shear_matrix = randSheer(scale_range, shear_range)
     transformed_points = rotated_points @ shear_matrix.T
-
+    
+    #计算旋转矩阵的逆矩阵，将剪切变换后的点云应用逆旋转，也就是将点云旋转回原来的方向，但已经应用了剪切和缩放变换。
+    #这样做的目的是为了保持变换后的点云在原来的方向上，但形状已经被修改。然后，将点云平移回原来的中心位置。
     inverse_rotation_matrix = np.linalg.inv(rotation_matrix)
     transformed_points = transformed_points @ inverse_rotation_matrix.T
 
