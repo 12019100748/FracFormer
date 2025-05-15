@@ -66,19 +66,21 @@ def apply_transform(deformShape,Trand):#将 ​​4x4 齐次变换矩阵​​ �
 
     return deformShape_transformed#​​输出​​：变换后的三维点云，形状为 (N, 3)。
 
-def FracturePose(Target,Labelsample):
-
+def FracturePose(Target,Labelsample):#传入点坐标和点的label
+#FracturePose 函数的作用是根据点云的标签（Labelsample），将输入的三维点云（Target）分割为多个碎片，并为每个碎片施加独立的随机刚体变换（旋转 + 平移），模拟物体碎裂后的姿态变化。
     deformShape = copy.deepcopy(Target)
 
     FracNum = np.max(Labelsample)
     Tramdom = np.identity(4)
 
     for Fracidx in range(FracNum):
+        #这里应该是找出属于当前碎片索引的点。比如第一个碎片是1，Fracidx从0开始，所以Fracidx+1是1，找到Labelsample中等于1的索引。这可能意味着Labelsample中的标签是从1开始的，而循环变量Fracidx从0到FracNum-1，因此需要+1来匹配标签。
         indices = Labelsample == Fracidx+1
-        Tramdom = randomMatrix(deformShape[indices],max_angle=30,max_tran=15,type='uniform')
-        deformShape[indices]=apply_transform(deformShape[indices],Tramdom)
+        #这里调用了randomMatrix函数，传入当前碎片的点集，max_angle和max_tran参数，类型是uniform。这个函数应该生成一个随机的变换矩阵，可能是旋转和平移的组合，围绕该碎片的中心进行变换。
+        Tramdom = randomMatrix(deformShape[indices],max_angle=30,max_tran=15,type='uniform')#这里调用了randomMatrix函数，传入当前碎片的点集。围绕该碎片的中心进行变换
+        deformShape[indices]=apply_transform(deformShape[indices],Tramdom)#应用生成的变换矩阵到当前碎片的所有点上，更新deformShape中对应的点。
 
-    return deformShape,Tramdom
+    return deformShape,Tramdom#所有碎片独立变换后的完整点云以及​​最后一个碎片的变换矩阵
 
 def preprocess(Fratures,Target,Labelsample,npoints):
 
