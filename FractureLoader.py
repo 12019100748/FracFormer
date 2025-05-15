@@ -53,18 +53,18 @@ def randomMatrix(points,max_angle=30,max_tran=30,type='normal'):
 
     
     Trandom = np.dot(np.linalg.inv(Tcenter),np.dot(Trandom,Tcenter))#将初始变换矩阵 Trandom 修正为以点云中心为参考系的变换。
-    return Trandom
+    return Trandom#该函数返回的是一个 ​​4x4 的刚体变换矩阵
 
-def apply_transform(deformShape,Trand):
+def apply_transform(deformShape,Trand):#将 ​​4x4 齐次变换矩阵​​ 应用于三维点云，实现点云的旋转、平移等刚体变换操作。
 
-    N = deformShape.shape[0]
-    deformShape_homogeneous = np.hstack((deformShape, np.ones((N, 1))))
+    N = deformShape.shape[0]#获取点云的点数
+    deformShape_homogeneous = np.hstack((deformShape, np.ones((N, 1))))#将三维点转换为齐次坐标（4D 形式 [x, y, z, 1]）
 
-    deformShape_transformed = np.dot(Trand, deformShape_homogeneous.T).T
+    deformShape_transformed = np.dot(Trand, deformShape_homogeneous.T).T#通过矩阵乘法将变换矩阵 Trand 应用到点云上。
 
-    deformShape_transformed = deformShape_transformed[:, :3]
+    deformShape_transformed = deformShape_transformed[:, :3]#去除齐次坐标的第四维度（值为 1），将点云恢复为三维坐标。输出形状为 (N, 3)，与输入 deformShape 一致。
 
-    return deformShape_transformed
+    return deformShape_transformed#​​输出​​：变换后的三维点云，形状为 (N, 3)。
 
 def FracturePose(Target,Labelsample):
 
