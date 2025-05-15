@@ -5,7 +5,7 @@ import numpy as np
 import copy
 from scipy.spatial.transform import Rotation
 
-def list_file_names(directory):
+def list_file_names(directory):#返回包含目录下所有文件完整路径的列表
     file_names = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
     return file_names
 
