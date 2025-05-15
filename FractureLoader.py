@@ -116,15 +116,15 @@ def random_rotation_matrix():
     return Rz @ Ry @ Rx
 
 def randSheer(scale_range=0,shear_range=0):
-
+    #模拟骨骼碎片在受力时的局部尺寸变化（如压缩或拉伸导致的长短、粗细改变）。例如，骨折端可能因撞击产生微小的缩短（缩放因子 <1）或错位拉伸（缩放因子> 1）
     scale_x = 1.0 + np.random.uniform(-scale_range, scale_range)
     scale_y = 1.0 + np.random.uniform(-scale_range, scale_range)
-    scale_z = 1.0 + np.random.uniform(-scale_range, scale_range)
-
-    shear_x = np.random.uniform(-shear_range, shear_range)
+    scale_z = 1.0 + np.random.uniform(-scale_range, scale_range)#模拟骨骼碎片在 x/y/z 轴上的局部拉伸或压缩（如骨折端挤压导致的尺寸变化）。
+    #模拟骨骼碎片在受到剪切力（如扭转、侧方撞击）时的非均匀错位。例如，踝关节骨折中，腓骨碎片可能因扭转力发生水平方向的剪切错位（对应矩阵中的shear_x或shear_y）
+    shear_x = np.random.uniform(-shear_range, shear_range)#模拟骨折面的错位变形（如碎片沿某一平面滑动导致的倾斜）。
     shear_y = np.random.uniform(-shear_range, shear_range)
     shear_z = np.random.uniform(-shear_range, shear_range)
-    transformation_matrix = np.array([[scale_x, shear_x, 0],
+    transformation_matrix = np.array([[scale_x, shear_x, 0],## X轴方向：缩放+X-Y平面剪切
                                       [shear_y, scale_y, 0],
                                       [shear_z, shear_z, scale_z]])
     return transformation_matrix
@@ -132,7 +132,7 @@ def randSheer(scale_range=0,shear_range=0):
 def global_deform(points, scale_range=0.1, shear_range=0.2):
 
     center = np.mean(points,axis=0)
-    centered_points = points - center
+    centered_points = points - center#将点云重心平移至原点
 
     rotation_matrix = random_rotation_matrix()
     rotated_points = centered_points @ rotation_matrix.T
@@ -192,7 +192,7 @@ class DataLoader(Dataset):
 
         Fractures = np.loadtxt(self.frac_list[idx],delimiter=',')#读取.txt文件
         DeformShape,Labelsample = Fractures[:,:3],Fractures[:,3].astype(np.int64)#分别获取所有行的前三列（索引0,1,2），表示三维点云坐标。所有行的第四列（索引3），转换为整数类型，表示每个点的分类标签。
-        if self.Elastic:
+        if self.Elastic:#对点云施加 ​​非刚性形变​​，模拟物体弯曲、拉伸等弹性变化
             DeformShape = global_deform(DeformShape, scale_range=0.1, shear_range=0.1)
         if self.Tinit:
             Trandom = randomMatrix(DeformShape, max_angle=30, max_tran=30)
